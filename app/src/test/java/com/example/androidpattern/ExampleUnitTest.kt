@@ -1,4 +1,4 @@
-package aero.cubox.androidpattern
+package com.example.androidpattern
 
 import org.junit.Test
 

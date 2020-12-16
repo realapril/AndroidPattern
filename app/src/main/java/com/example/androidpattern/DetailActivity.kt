@@ -1,4 +1,4 @@
-package aero.cubox.androidpattern
+package com.example.androidpattern
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity

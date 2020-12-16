@@ -1,9 +1,9 @@
-package aero.cubox.androidpattern
+package com.example.androidpattern
 
-import aero.cubox.androidpattern.MainActivity.Constants.DATE
-import aero.cubox.androidpattern.MainActivity.Constants.RATING
-import aero.cubox.androidpattern.MainActivity.Constants.TITLE
-import aero.cubox.androidpattern.MainActivity.Constants.YEAR
+import com.example.androidpattern.MainActivity.Constants.DATE
+import com.example.androidpattern.MainActivity.Constants.RATING
+import com.example.androidpattern.MainActivity.Constants.TITLE
+import com.example.androidpattern.MainActivity.Constants.YEAR
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
