@@ -10,11 +10,18 @@ class DetailActivity : AppCompatActivity() {
         val bundle = intent.extras
         setContentView(R.layout.activity_detail)
         bundle?.let {
-            detail_rating.text = "${MainActivity.Constants.RATING.capitalize()}: ${it.getString(MainActivity.Constants.RATING)}"
-            detail_title.text = "${MainActivity.Constants.TITLE.capitalize()}: ${it.getString(MainActivity.Constants.TITLE)}"
-            detail_year.text = "${MainActivity.Constants.YEAR.capitalize()}: ${it.getString(MainActivity.Constants.YEAR)}"
-            detail_date.text = "${MainActivity.Constants.DATE.capitalize()}: ${it.getString(MainActivity.Constants.DATE)}"
+            detail_rating.text = "${Constants.RATING.capitalize()}: ${bundle.getString(Constants.RATING)}"
+            detail_title.text = "${Constants.TITLE.capitalize()}: ${bundle.getString(Constants.TITLE)}"
+            detail_year.text = "${Constants.YEAR.capitalize()}: ${bundle.getString(Constants.YEAR)}"
+            detail_date.text = "${Constants.DATE.capitalize()}: ${bundle.getString(Constants.DATE)}"
         }
 
+    }
+
+    object Constants {
+        const val RATING = "rating"
+        const val TITLE = "title"
+        const val YEAR = "year"
+        const val DATE = "date"
     }
 }

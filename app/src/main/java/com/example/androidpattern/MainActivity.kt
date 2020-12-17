@@ -1,9 +1,7 @@
 package com.example.androidpattern
 
-import com.example.androidpattern.MainActivity.Constants.DATE
-import com.example.androidpattern.MainActivity.Constants.RATING
-import com.example.androidpattern.MainActivity.Constants.TITLE
-import com.example.androidpattern.MainActivity.Constants.YEAR
+
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -29,84 +27,74 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 class MainActivity : AppCompatActivity() {
-    object Constants {
-        const val RATING = "rating"
-        const val TITLE = "title"
-        const val YEAR = "year"
-        const val DATE = "date"
-    }
-    private val compositeDisposable: CompositeDisposable = CompositeDisposable()
+    private lateinit var mController: Controller
+    private lateinit var mModel: Model
     private lateinit var addressAdapter: AddressAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        addressAdapter = AddressAdapter(onClick = { item ->
-            var bundle = Bundle()
-            bundle.putString(RATING, item.rating)
-            bundle.putString(TITLE, item.title)
-            bundle.putString(YEAR, item.year)
-            bundle.putString(DATE, item.date)
-            var intent = Intent(this, DetailActivity::class.java)
-            intent.putExtras(bundle)
-            startActivity(intent)
-        })
-        main_activity_recyclerView.adapter = addressAdapter
+        mController = Controller()
+        mModel = Model(mController)
+        mController hasView this
+        mController hasModel mModel
+        loadView()
         respondToClicks()
     }
 
+    private fun loadView() {
+        setContentView(R.layout.activity_main)
+        addressAdapter = AddressAdapter()
+        main_activity_recyclerView.adapter = addressAdapter
+    }
+
     private fun respondToClicks() {
-        main_activity_button.setOnClickListener { findAddress(main_activity_editText.text.toString()) }
+        //검색버튼
+        main_activity_button.setOnClickListener { mController.findAddress(main_activity_editText.text.toString()) }
+        //리사이클러뷰 아이템
+        addressAdapter setItemClickMethod {
+            mController doWhenClickIsMadeOn it
+        }
+        addressAdapter.setItemShowMethod { fetchItemText(it) }
     }
 
-    override fun onResume() {
-        super.onResume()
-        hideProgressBar()
-    }
-
-    private fun findAddress(address: String) {
-        val disposable: Disposable = fetchAddress(address)!!.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribeWith(object : DisposableObserver<List<ResultEntity>?>() {
-            override fun onNext(t: List<ResultEntity>) {
-                hideProgressBar()
-                updateRecyclerView(t)
-            }
-
-            override fun onStart() {
-                showProgressBar()
-            }
-
-            override fun onComplete() {
-            }
-
-            override fun onError(e: Throwable) {
-                main_activity_progress_bar.visibility = View.GONE
-                Toast.makeText(this@MainActivity, "Error retrieving data: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        })
-        compositeDisposable.add(disposable)
-    }
-
-    private fun showProgressBar() {
-        main_activity_progress_bar.visibility = View.VISIBLE
-    }
-
-    private fun hideProgressBar() {
-        main_activity_progress_bar.visibility = View.GONE
+    fun fetchItemText(it: Model.ResultEntity): String {
+        return "${it.year}: ${it.title}"
     }
 
     override fun onStop() {
         super.onStop()
-        compositeDisposable.clear()
+        mController.onStop()
     }
 
-    private fun updateRecyclerView(t: List<ResultEntity>) {
+    private fun updateMovieList(t: List<Model.ResultEntity>) {
         addressAdapter.updateList(t)
         addressAdapter.notifyDataSetChanged()
     }
 
-    class AddressAdapter(val onClick: (item: ResultEntity) -> Unit) : RecyclerView.Adapter<AddressAdapter.Holder>() {
-        var mList: List<ResultEntity> = arrayListOf()
+    fun showResult() {
+        updateMovieList(mModel.mList)
+    }
 
+    fun showError() {
+        showToast(this, "Error")
+    }
+
+    fun showProgressBar() {
+        main_activity_progress_bar.visibility = View.VISIBLE
+    }
+
+    fun hideProgressBar() {
+        main_activity_progress_bar.visibility = View.GONE
+    }
+
+    private fun showToast(context: Context, msg: String) {
+        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+    }
+
+    class AddressAdapter : RecyclerView.Adapter<AddressAdapter.Holder>() {
+        var mList: List<Model.ResultEntity> = arrayListOf()
+        private lateinit var mOnClick: (item: Model.ResultEntity) -> Unit
+        private lateinit var mOnShowItem: (item: Model.ResultEntity) -> String
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
             val view = LayoutInflater.from(parent!!.context).inflate(R.layout.item, parent, false)
@@ -114,38 +102,26 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onBindViewHolder(holder: Holder, position: Int) {
-            holder.itemView.item_textView.text = "${mList[position].year}: ${mList[position].title}"
-            holder.itemView.setOnClickListener { onClick(mList[position]) }
+            holder.itemView.item_textView.text = mOnShowItem(mList[position])
+            holder.itemView.setOnClickListener { mOnClick(mList[position]) }
         }
 
         override fun getItemCount(): Int {
             return mList.size
         }
 
-        fun updateList(list: List<ResultEntity>) {
+        infix fun setItemClickMethod(onClick: (item: Model.ResultEntity) -> Unit) {
+            this.mOnClick = onClick
+        }
+
+        infix fun setItemShowMethod(onShowItem: (item: Model.ResultEntity) -> String) {
+            this.mOnShowItem = onShowItem
+        }
+
+        fun updateList(list: List<Model.ResultEntity>) {
             mList = list
         }
 
-        class Holder(itemView: View?) : RecyclerView.ViewHolder(itemView!!)
-
+        class Holder(itemView: View) : RecyclerView.ViewHolder(itemView)
     }
-
-    private var mRetrofit: Retrofit? = null
-
-    private fun fetchAddress(address: String): Observable<List<ResultEntity>>? {
-        if (mRetrofit == null) {
-            val loggingInterceptor = HttpLoggingInterceptor()
-            loggingInterceptor.level = HttpLoggingInterceptor.Level.BODY
-            val client = OkHttpClient.Builder().addInterceptor(loggingInterceptor).build()
-            mRetrofit = Retrofit.Builder().baseUrl("http://bechdeltest.com/api/v1/").addConverterFactory(GsonConverterFactory.create()).addCallAdapterFactory(RxJava2CallAdapterFactory.create()).client(client).build()
-        }
-        return mRetrofit?.create(AddressService::class.java)?.fetchLocationFromServer(address)
-    }
-
-    interface AddressService {
-        @GET("getMoviesByTitle")
-        fun fetchLocationFromServer(@Query("title") title: String): Observable<List<ResultEntity>>
-    }
-
-    class ResultEntity(val title: String, val rating: String, val date: String, val year: String)
 }
