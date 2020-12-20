@@ -17,5 +17,5 @@ branch: mvp
 [related article](https://realapril.tistory.com/59)
 
 ## MVVM
-branch: mvvm 
+branch: mvvm    
 [related article](https://realapril.tistory.com/60)
