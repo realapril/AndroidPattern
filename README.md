@@ -2,7 +2,7 @@
 
 
 MVC, MVP, MVVM 패턴 비교용 어플리케이션입니다.   
-자세한 설명은 [여기서](https://realapril.tistory.com/56) 가능합니다.   
+자세한 설명은 [여기서](https://realapril.tistory.com/56) 읽을 수 있습니다.      
 
 ## No pattern
 branch: no_pattern  
