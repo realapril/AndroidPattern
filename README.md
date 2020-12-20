@@ -14,7 +14,8 @@ branch: mvc
 
 ## MVP
 branch: mvp  
-[related article](https://github.com/realapril/AndroidPattern/tree/mvp)
+[related article](https://realapril.tistory.com/59)
 
 ## MVVM
-branch: mvvm (아직없음)
+branch: mvvm    
+[related article](https://realapril.tistory.com/60)
